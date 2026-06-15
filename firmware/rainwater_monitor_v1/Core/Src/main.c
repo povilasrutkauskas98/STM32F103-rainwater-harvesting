@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
+#include "hcsr04.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,46 +62,6 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-uint32_t GetDistanceCM(void)
-{
-    uint32_t timeout = 0;
-    uint32_t echo_time = 0;
-    uint32_t distance_cm = 0;
-
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
-    HAL_Delay(2);
-
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
-    __HAL_TIM_SET_COUNTER(&htim2, 0);
-    while (__HAL_TIM_GET_COUNTER(&htim2) < 10) {}
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
-
-    timeout = 0;
-    while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET)
-    {
-        timeout++;
-        if (timeout > 100000)
-            return 0;
-    }
-
-    __HAL_TIM_SET_COUNTER(&htim2, 0);
-
-    while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
-    {
-        if (__HAL_TIM_GET_COUNTER(&htim2) > 60000)
-            return 0;
-    }
-
-    echo_time = __HAL_TIM_GET_COUNTER(&htim2);
-    distance_cm = echo_time / 58;
-
-    return distance_cm;
-}
-
-
-
-
 
 /* USER CODE END 0 */
 
@@ -146,61 +107,65 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  while (1)
-	  {
-	      uint32_t distance_cm;
-	      uint32_t water_level_cm;
-	      uint32_t fill_percent;
-	      uint32_t volume_ml;
-	      char msg[100];
+  while (1)
+   {
+		  uint32_t distance_cm;
+		      uint32_t water_level_cm;
+		      uint32_t fill_percent;
+		      uint32_t volume_ml;
+		      char msg[100];
 
-	      const uint32_t DISTANCE_EMPTY = 16;
-	      const uint32_t DISTANCE_FULL  = 2;
+		      const uint32_t DISTANCE_EMPTY = 16;
+		      const uint32_t DISTANCE_FULL  = 2;
 
-	      distance_cm = GetDistanceCM();
+		      distance_cm = GetAverageDistanceCM();
 
-	      if (distance_cm >= DISTANCE_EMPTY || distance_cm == 0)
-	      {
-	          water_level_cm = 0;
-	          fill_percent = 0;
-	      }
-	      else if (distance_cm <= DISTANCE_FULL)
-	      {
-	          water_level_cm = DISTANCE_EMPTY - DISTANCE_FULL;
-	          fill_percent = 100;
-	      }
-	      else
-	      {
-	          water_level_cm = DISTANCE_EMPTY - distance_cm;
-	          fill_percent =
-	              ((DISTANCE_EMPTY - distance_cm) * 100) /
-	              (DISTANCE_EMPTY - DISTANCE_FULL);
-	      }
+		      if (distance_cm >= DISTANCE_EMPTY || distance_cm == 0)
+		      {
+		          water_level_cm = 0;
+		          fill_percent = 0;
+		      }
+		      else if (distance_cm <= DISTANCE_FULL)
+		      {
+		          water_level_cm = DISTANCE_EMPTY - DISTANCE_FULL;
+		          fill_percent = 100;
+		      }
+		      else
+		      {
+		          water_level_cm = DISTANCE_EMPTY - distance_cm;
 
-	      volume_ml = (uint32_t)(3.1416f * 5.75f * 5.75f * water_level_cm);
+		          fill_percent =
+		              ((DISTANCE_EMPTY - distance_cm) * 100) /
+		              (DISTANCE_EMPTY - DISTANCE_FULL);
+		      }
 
-	      sprintf(msg,
-	              "Distance=%lu cm Level=%lu cm Fill=%lu%% Volume=%lu ml\r\n",
-	              distance_cm,
-	              water_level_cm,
-	              fill_percent,
-	              volume_ml);
+		      volume_ml =
+		          (uint32_t)(3.1416f *
+		                     5.75f *
+		                     5.75f *
+		                     water_level_cm);
 
-	      HAL_UART_Transmit(&huart1,
-	                        (uint8_t*)msg,
-	                        strlen(msg),
-	                        1000);
+		      sprintf(msg,
+		              "Distance=%lu cm Level=%lu cm Fill=%lu%% Volume=%lu ml\r\n",
+		              distance_cm,
+		              water_level_cm,
+		              fill_percent,
+		              volume_ml);
 
-	      HAL_Delay(500);
+		      HAL_UART_Transmit(&huart1,
+		                        (uint8_t*)msg,
+		                        strlen(msg),
+		                        1000);
+
+		      HAL_Delay(500);
 	  }
-	  }
-  /* USER CODE END 3 */
 }
+  /* USER CODE END 3 */
+
 
 /**
   * @brief System Clock Configuration
