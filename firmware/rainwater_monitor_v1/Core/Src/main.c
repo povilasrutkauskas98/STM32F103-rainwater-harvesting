@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "hcsr04.h"
+#include "tank.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -119,35 +120,14 @@ int main(void)
 		      uint32_t volume_ml;
 		      char msg[100];
 
-		      const uint32_t DISTANCE_EMPTY = 16;
-		      const uint32_t DISTANCE_FULL  = 2;
-
 		      distance_cm = GetAverageDistanceCM();
 
-		      if (distance_cm >= DISTANCE_EMPTY || distance_cm == 0)
-		      {
-		          water_level_cm = 0;
-		          fill_percent = 0;
-		      }
-		      else if (distance_cm <= DISTANCE_FULL)
-		      {
-		          water_level_cm = DISTANCE_EMPTY - DISTANCE_FULL;
-		          fill_percent = 100;
-		      }
-		      else
-		      {
-		          water_level_cm = DISTANCE_EMPTY - distance_cm;
+		      water_level_cm = Tank_GetLevelCM(distance_cm);
 
-		          fill_percent =
-		              ((DISTANCE_EMPTY - distance_cm) * 100) /
-		              (DISTANCE_EMPTY - DISTANCE_FULL);
-		      }
+		      fill_percent = Tank_GetFillPercent(water_level_cm);
 
-		      volume_ml =
-		          (uint32_t)(3.1416f *
-		                     5.75f *
-		                     5.75f *
-		                     water_level_cm);
+		      volume_ml = Tank_GetVolumeML(water_level_cm);
+
 
 		      sprintf(msg,
 		              "Distance=%lu cm Level=%lu cm Fill=%lu%% Volume=%lu ml\r\n",
